@@ -37,6 +37,9 @@ if args.setIntTime:
 else:
     integrationTime = int(configParse['general']['integrationTime'])
 
+#import tracemalloc
+#tracemalloc.start()
+
 bounaryOffsetStart = 5      # Set the number of initial points in the spectrum to ignore (disregard dead pixels)
 setLengthInTime = False
 presaveLength = 50          # Number of spectra to keep in memory
@@ -67,13 +70,14 @@ if args.set:
         wavelengths = spec.wavelengths()[bounaryOffsetStart:]
         intensity = spec.intensities()[bounaryOffsetStart:]
         intensArr.append(np.trapz(intensity, wavelengths))
-    intInt = np.mean(intensArr)
+    intInt = np.mean(intensArr)/integrationTime
+    intStd = np.std(intensArr)/integrationTime
     if args.set == 'dark':
         configParse['spectrometerSettings']['dark'] = str(intInt)
-        print(f'Dark spectrum intensity over 50 steps: {intInt} +/- {np.std(intensArr)}')
+        print(f'Dark spectrum intensity over 50 steps: {intInt} +/- {intStd} us-1')
     elif args.set == 'plasma' or args.set == 'plas' or args.set == 'light':
         configParse['spectrometerSettings']['plasma'] = str(intInt)
-        print(f'Plasma on spectrum intensity over 50 steps: {intInt} +/- {np.std(intensArr)}')
+        print(f'Plasma on spectrum intensity over 50 steps: {intInt} +/- {intStd}')
 
 if args.tacq:
     print(f"Time out window set to {timeoutwindow} points or {timeoutwindow*integrationTime/10**6} seconds.")
@@ -81,7 +85,7 @@ if args.tacq:
     intensOn = float(configParse['spectrometerSettings']['plasma'])
     treshold = float(configParse['general']['threshold'])
     currCycle = float(configParse['acquisitionSettings']['currCycle'])
-    tresholdValue = intensOff + (intensOn - intensOff)*treshold
+    tresholdValue = (intensOff + (intensOn - intensOff)*treshold) * integrationTime
     
     acqIntIntens = []
     acqTime = []
@@ -152,6 +156,7 @@ if args.tacq:
             acqTime.append(saveTime)
             if args.track:
                 acqIntens.append(saveIntens)
+            #print(tracemalloc.get_traced_memory())
     except KeyboardInterrupt:
         plt.figure()
         for t,In in zip(acqTime,acqIntIntens):
@@ -191,3 +196,5 @@ with open('_spectrometer_config.ini', 'w') as configfile:    # save
     configParse.write(configfile)
 
 plt.show()
+
+#tracemalloc.stop()

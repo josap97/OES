@@ -10,7 +10,9 @@ What species are tracked in the OES data is determined by entries in the OESpeak
 # Time Resolved Measurements
 ## Running a Time Resolves Acquisition for Multiple Cycles
 When running a process with multiple plasma cycles, it may be interesting to systematically run OES on every plasma sub-cycle. `runOESAcquisition.py` allows this to be done through the command line. The script is run as follows
-`python runOESAcquisition.py -tag value`
+```
+python runOESAcquisition.py -tag value
+```
 1. `-reset 0` resets the counter index to 0 or any other value.
 2. `-setProc process_name` set the name of the process to be run, this is used in the output file names.
 3. `-setIntTime 5000` set the integration time in microseconds which can be 5 ms or 5000 us and up. This must be set before taking reference me
@@ -22,6 +24,7 @@ When running a process with multiple plasma cycles, it may be interesting to sys
     * Two plots will open to show the integrated intensity for every pulse and for a tolerant average of all pulses.
     * If `track` is used, a plot will open for every tracked wavelength.
 
+<<<<<<< Updated upstream
 ### Behind the Scenes
 When the script is started, the script will continuously poll the spectrometer for spectra until it is stopped using `ctrl+c`. Two null vectors are defined as $\bar{S}=[0,0,...,0]$ and $\bar{t}=[0,0,...,0]$. Every time the spectrometer is polled, the first spectrum in $\bar{S}$ is discarded and all other spectra are shifted left. A new spectrum $\bar{s}_i(\lambda)$ is measured and saved to the last position in $\bar{S}$. A total intensity is calculated as
 $$
@@ -30,6 +33,19 @@ $$<br>
 If this intensity satisfies
 $$I_i \geq (I_{plasma}-I_{dark})\cdot \text{treshold}$$
 where $I_{plasma}$ is set using `-set plasma` and $I_{dark}$ using `-set dark`, a treshold is defined in `_spectrometer_config.ini`. If the intensity is sufficiently high, the script starts measuring and includes a number of points defined in the `presaveLength` variable before reaching the trigger. When the intensity falls below the treshold value, the measurment will continue for `postaveLength` number of points. After this window has ended, the results will be saved to a file and the script starts listening for a new cycle. If a new sub-cycle starts before the `postaveLength` window ends, it will be considered as one acquisition.
+=======
+## Best Practices
+* The code has not been optimised meaning that it memory useage may be high. It is advised that memory consuming applications such as Chrome are closed before starting a measurement and to ensure that the terminal used to trigger the acquisition is highlighted throughout the run.
+* Since a the script continues measuring for a number of points defined in `postaveLength` after falling below the treshold, two plasmas closely following eachother will result in one acquisition rather than two seperate ones. To ensure all sub-cycles are captured individually, make sure that the time between sub-cycles is at least twice `postaveLength`*`integrationtime`.
+
+## Behind the Scenes
+Calling the script with `-tacq`  continuously polls the spectrometer for spectra until the script is stopped using `ctrl+c`. `ctrl+c` is a general keyboard interrupt in Python which stops the code, this interrupt is intercepted once. This means that when polling for spectra, `ctrl+c` will stop polling and allows the analysis to be performed. If the interrupt is given twice, the script will be stopped and data that has not been analysed or saved yet will be lost.<br>
+Two null vectors of length `presaveLength` are defined as `acqIntens=`$\bar{S}=[0,0,...,0]$ and `acqTime=`$\bar{t}=[0,0,...,0]$ to contain spectra and timestamps respectively for each datapoint $i$. Every time the spectrometer is polled, the first spectrum in $\bar{S}$ is discarded and all other spectra are shifted left. A new spectrum $\bar{s}_i(\lambda)$ is measured and saved to the last position in $\bar{S}$. A total intensity is calculated as <br>
+![equation](https://latex.codecogs.com/svg.image?v=I_i=\int\bar{s}(\lambda)d\lambda)<br>
+If this intensity satisfies<br>
+![equation](https://latex.codecogs.com/svg.image?v=I_i\geq(I_{plasma}-I_{dark})\cdot\text{treshold})
+where $I_{plasma}$ is set using `-set plasma` and $I_{dark}$ using `-set dark`, a treshold is defined in `_spectrometer_config.ini`, a measurement is started including (at most)  the number of datapoints defined in the `presaveLength` variable before reaching the trigger. When the intensity falls below the treshold value, the measurment will continue for `postaveLength` number of points. After this window has ended, the results will be saved to a file and the script starts listening for a new cycle. If a new sub-cycle starts before the `postaveLength` window ends, it will be considered as one acquisition.<br>
+>>>>>>> Stashed changes
 When an acquisition is triggered, a window of a length defined in `timeoutwindow` is started. Whenever an acquisition is started, the length of the window is output to the terminal in the number of points and seconds. This is the maximum length of an acquisition after which the current acquisition is ended and script listens to a the next trigger.
 
 ## Averaging of High Accuracy Acquisition

@@ -24,7 +24,9 @@ When running a process with multiple plasma cycles, it may be interesting to sys
 
 ### Behind the Scenes
 When the script is started, the script will continuously poll the spectrometer for spectra until it is stopped using `ctrl+c`. Two null vectors are defined as $\bar{S}=[0,0,...,0]$ and $\bar{t}=[0,0,...,0]$. Every time the spectrometer is polled, the first spectrum in $\bar{S}$ is discarded and all other spectra are shifted left. A new spectrum $\bar{s}_i(\lambda)$ is measured and saved to the last position in $\bar{S}$. A total intensity is calculated as
-$$I_i=\int \bar{s}(\lambda)d\lambda$$.
+$$
+   I_i=\int \bar{s}(\lambda)d\lambda
+$$<br>
 If this intensity satisfies
 $$I_i \geq (I_{plasma}-I_{dark})\cdot \text{treshold}$$
 where $I_{plasma}$ is set using `-set plasma` and $I_{dark}$ using `-set dark`, a treshold is defined in `_spectrometer_config.ini`. If the intensity is sufficiently high, the script starts measuring and includes a number of points defined in the `presaveLength` variable before reaching the trigger. When the intensity falls below the treshold value, the measurment will continue for `postaveLength` number of points. After this window has ended, the results will be saved to a file and the script starts listening for a new cycle. If a new sub-cycle starts before the `postaveLength` window ends, it will be considered as one acquisition.
